@@ -37,10 +37,13 @@ public class Bot {
             return new ShootCommand(direction);
         }
 
-        List<Cell> surroundingBlocks = getSurroundingCells(currentWorm.position.x, currentWorm.position.y);
-        int cellIdx = random.nextInt(surroundingBlocks.size());
+        // List<Cell> surroundingBlocks = getSurroundingCells(currentWorm.position.x, currentWorm.position.y);
+        // int cellIdx = random.nextInt(surroundingBlocks.size());
 
-        Cell block = surroundingBlocks.get(cellIdx);
+        /***********  Tambahan urg ***********/
+        enemyWorm = getWormToHunt();
+        Cell block = getNextCellToGo(currentWorm.position, enemyWorm.position);
+
         if (block.type == CellType.AIR) {
             return new MoveCommand(block.x, block.y);
         } else if (block.type == CellType.DIRT) {
@@ -60,7 +63,8 @@ public class Bot {
 
         for (Worm enemyWorm : opponent.worms) {
             String enemyPosition = String.format("%d_%d", enemyWorm.position.x, enemyWorm.position.y);
-            if (cells.contains(enemyPosition)) {
+            if (cells.contains(enemyPosition) && enemyWorm.health > 0) {
+                /*********** Tambahan urg yang ini : enemyWorm.health > 0 ***********/
                 return enemyWorm;
             }
         }
@@ -140,5 +144,34 @@ public class Bot {
         }
 
         return Direction.valueOf(builder.toString());
+    }
+
+    /*****  2 method tambahan *****/
+    private Cell getNextCellToGo(Position origin, Position destination) {
+        List<Cell> surroundingBlocks = getSurroundingCells(origin.x, origin.y);
+        int size = surroundingBlocks.size();
+        int[] arrDistance = new int[size];
+        int imin = 0;
+        for (int i = 0; i < size; i++) {
+            Cell block = surroundingBlocks.get(i);
+            arrDistance[i] = euclideanDistance(block.x, block.y, destination.x, destination.y);
+            if (arrDistance[i] < arrDistance[imin]) {
+                imin = i;
+            }
+        }
+
+        return surroundingBlocks.get(imin);
+    }
+
+    private Worm getWormToHunt() {
+        if (opponent.worms[0].health > 0) {
+            return opponent.worms[0];
+        } else if (opponent.worms[1].health > 0) {
+            return opponent.worms[1];
+        } else if (opponent.worms[2].health > 0) {
+            return opponent.worms[2];
+        } else {
+            return null;
+        }
     }
 }
