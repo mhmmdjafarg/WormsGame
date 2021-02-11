@@ -29,6 +29,7 @@ public class Bot {
                 .get();
     }
 
+    // Main Command
     public Command run() {
 
         Worm enemyWorm = getFirstWormInRange();
