@@ -175,4 +175,29 @@ public class Bot {
             return null;
         }
     }
+
+    private boolean isEnemyThrowable(Position enemy_position , String utility) { //randy
+        /** cek di sekitar musuh ada temen atau ngga
+         * utility bisa berupa "snow" atau "banana"
+         */
+        for (int i = 0; i < 3; ++i) {
+            if (gameState.myPlayer.worms[i].health != 0) {
+                /** kalau ga mati berarti ada kemungkinan deket musuh **/
+                int deltax = gameState.myPlayer.worms[i].position.x - enemy_position.x;
+                int deltay = gameState.myPlayer.worms[i].position.y - enemy_position.y;
+                int radius;
+                if (utility == "banana"){
+                    radius = 2;
+                }else if (utility == "snow") {
+                    radius = 1;
+                }
+                if (Math.sqrt(Math.pow(deltax, 2) + Math.pow(deltay, 2)) <= radius) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+
 }
