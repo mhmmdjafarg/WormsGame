@@ -45,6 +45,9 @@ public class Bot {
         }else{
             // untuk banana atau snowball, jika masih ada peluru tembak terus pake select
             int idxEnemyThrowable =  isAnyEnemyThrowable(currentWorm.profession);
+            if(idxEnemyThrowable != -1){
+
+            
             if (currentWorm.bananaBombs != null) {
                 if (currentWorm.bananaBombs.count > 0) {
                     return new BananaCommand(opponent.worms[idxEnemyThrowable].position.x, opponent.worms[idxEnemyThrowable].position.y);
@@ -54,6 +57,7 @@ public class Bot {
                     return new SnowCommand(opponent.worms[idxEnemyThrowable].position.x, opponent.worms[idxEnemyThrowable].position.y);
                 } 
             }
+        }
         }
        
         enemyWorm = getFirstWormInRange();
