@@ -15,6 +15,9 @@ public class MyPlayer {
     @SerializedName("remainingWormSelections")
     public int remainingWormSelections;
 
+    @SerializedName("previousCommand")
+    public String previousCommand;
+
     @SerializedName("worms")
     public MyWorm[] worms;
 }

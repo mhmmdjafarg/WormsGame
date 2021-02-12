@@ -31,27 +31,57 @@ public class Bot {
 
     // Main Command
     public Command run() {
+        Worm enemyWorm;
+        if (currentWorm.profession == "Commando") {
+            // untuk select menggunakan snowball atau banana jika tersedia, baru banana belum snowball
+            int idxEnemyAgent =  isAnyEnemyThrowable("Agent");
 
-        Worm enemyWorm = getFirstWormInRange();
+            if(idxEnemyAgent != -1){
+                if (gameState.myPlayer.worms[1].bananaBombs.count > 0) {
+                    Command Banana = new BananaCommand(opponent.worms[idxEnemyAgent].position.x, opponent.worms[idxEnemyAgent].position.y);
+                    return new  SelectCommand(2, Banana.render());
+                } 
+            } 
+        }else{
+            // untuk banana atau snowball, jika masih ada peluru tembak terus pake select
+            int idxEnemyThrowable =  isAnyEnemyThrowable(currentWorm.profession);
+            if (currentWorm.bananaBombs != null) {
+                if (currentWorm.bananaBombs.count > 0) {
+                    return new BananaCommand(opponent.worms[idxEnemyThrowable].position.x, opponent.worms[idxEnemyThrowable].position.y);
+                } 
+            } else if (currentWorm.snowBalls != null) {
+                if (currentWorm.snowBalls.count > 0 && opponent.worms[idxEnemyThrowable].roundsUntilUnfrozen == 0) {
+                    return new SnowCommand(opponent.worms[idxEnemyThrowable].position.x, opponent.worms[idxEnemyThrowable].position.y);
+                } 
+            }
+        }
+       
+        enemyWorm = getFirstWormInRange();
         if (enemyWorm != null) {
             Direction direction = resolveDirection(currentWorm.position, enemyWorm.position);
             return new ShootCommand(direction);
         }
-
         // List<Cell> surroundingBlocks = getSurroundingCells(currentWorm.position.x, currentWorm.position.y);
         // int cellIdx = random.nextInt(surroundingBlocks.size());
-
-        /***********  Tambahan urg ***********/
-        enemyWorm = getWormToHunt();
-        Cell block = getNextCellToGo(currentWorm.position, enemyWorm.position);
-
-        if (block.type == CellType.AIR) {
-            return new MoveCommand(block.x, block.y);
-        } else if (block.type == CellType.DIRT) {
-            return new DigCommand(block.x, block.y);
+        
+        Position powerup = getNearestPowerupPosition();
+        // Prioritas ambil powerUp jika health tidak max
+        if (powerup.x != -1 && currentWorm.health < 100) {
+            return digAndMoveTo(currentWorm.position, powerup);
+        } else{
+            enemyWorm = getWormToHunt();
+            return digAndMoveTo(currentWorm.position, enemyWorm.position);
         }
+        
+        // Cell block = getNextCellToGo(currentWorm.position, enemyWorm.position);
 
-        return new DoNothingCommand();
+        // if (block.type == CellType.AIR) {
+        //     return new MoveCommand(block.x, block.y);
+        // } else if (block.type == CellType.DIRT) {
+        //     return new DigCommand(block.x, block.y);
+        // }
+
+        // return new DoNothingCommand();
     }
 
     private Worm getFirstWormInRange() {
@@ -65,7 +95,7 @@ public class Bot {
         for (Worm enemyWorm : opponent.worms) {
             String enemyPosition = String.format("%d_%d", enemyWorm.position.x, enemyWorm.position.y);
             if (cells.contains(enemyPosition) && enemyWorm.health > 0) {
-                /*********** Tambahan urg yang ini : enemyWorm.health > 0 ***********/
+                /* enemyWorm.health > 0 : cek dulu musuhnya masih hidup apa kagak*/
                 return enemyWorm;
             }
         }
@@ -113,7 +143,7 @@ public class Bot {
                 }
             }
         }
-
+        
         return cells;
     }
 
@@ -147,11 +177,15 @@ public class Bot {
         return Direction.valueOf(builder.toString());
     }
 
-    /*****  2 method tambahan *****/
+    /* Cari cell selanjutnya yang mengarah ke tujuan (destination) */
     private Cell getNextCellToGo(Position origin, Position destination) {
+        /* list semua cell di sekitar, 
+        setiap cellnya akan dihitung jarak euclidean ke dest,*/
         List<Cell> surroundingBlocks = getSurroundingCells(origin.x, origin.y);
         int size = surroundingBlocks.size();
         int[] arrDistance = new int[size];
+
+        /* pilih cell yang jaraknya paling minimum */
         int imin = 0;
         for (int i = 0; i < size; i++) {
             Cell block = surroundingBlocks.get(i);
@@ -160,7 +194,7 @@ public class Bot {
                 imin = i;
             }
         }
-
+        
         return surroundingBlocks.get(imin);
     }
 
@@ -176,22 +210,23 @@ public class Bot {
         }
     }
 
-    private boolean isEnemyThrowable(Position enemy_position , String utility) { //randy
+    // Utility = ganti profesion
+    // worm.profession
+    private boolean isEnemyThrowable(Position enemy_position , String profession) { //randy
         /** cek di sekitar musuh ada temen atau ngga
-         * utility bisa berupa "snow" atau "banana"
+         * profession bisa berupa "Agent" atau "Technologist"
          */
         for (int i = 0; i < 3; ++i) {
             if (gameState.myPlayer.worms[i].health != 0) {
                 /** kalau ga mati berarti ada kemungkinan deket musuh **/
-                int deltax = gameState.myPlayer.worms[i].position.x - enemy_position.x;
-                int deltay = gameState.myPlayer.worms[i].position.y - enemy_position.y;
-                int radius;
-                if (utility == "banana"){
+                Position myWormPosition = gameState.myPlayer.worms[i].position;
+                int radius = 0; // default value , kalau commando
+                if (profession == "Agent"){
                     radius = 2;
-                }else if (utility == "snow") {
+                }else if (profession == "Technologist") {
                     radius = 1;
                 }
-                if (Math.sqrt(Math.pow(deltax, 2) + Math.pow(deltay, 2)) <= radius) {
+                if (euclideanDistance(myWormPosition.x, myWormPosition.y, enemy_position.x, enemy_position.y) <= radius || radius == 0) {
                     return false;
                 }
             }
@@ -199,5 +234,113 @@ public class Bot {
         return true;
     }
 
+    private Position getNearestPowerupPosition() {
+        /**mencari letak powerup terdekat */
+        List<Position> allPowerUp = new ArrayList<>();
+        boolean thereIsPowerUp = false;
+        for (int i = 0; i < gameState.mapSize; ++i) {
+            for (int j = 0; j < gameState.mapSize; ++j) {
+                if (gameState.map[i][j].powerUp != null) {
+                    Position powerupPosition = new Position();
+                    powerupPosition.x = i;
+                    powerupPosition.y = j;
+                    allPowerUp.add(powerupPosition);
+                    thereIsPowerUp = true;
+                }
+            }
+        }
+        if (thereIsPowerUp) {
+            int absisWorm = currentWorm.position.x;
+            int ordinatWorm = currentWorm.position.y;
+            Position minimumPoint = allPowerUp.get(0);
+            int minimumDistance = euclideanDistance(minimumPoint.x, minimumPoint.y, absisWorm, ordinatWorm);
+            for (int k = 0; k < allPowerUp.size() ; ++k) {
+                Position powerUpPosition = allPowerUp.get(k);
+                int distancePowerUp = euclideanDistance(powerUpPosition.x, powerUpPosition.y, absisWorm, ordinatWorm);
+                if (distancePowerUp < minimumDistance) {
+                    minimumDistance = distancePowerUp;
+                    minimumPoint = powerUpPosition;
+                }
+            }
+            return minimumPoint;
+        }
+        /**kalau gaada powerup lagi, return position dengan absis -1 dan ordinat -1 */
 
+        Position nothing = new Position();
+        nothing.x = -1; nothing.y = -1;
+        return nothing;
+    }
+
+    private boolean isEnemyFrozen(Worm enemy){
+        return (enemy.roundsUntilUnfrozen > 0);
+    }
+
+    // Origin --> titik asal
+    private Command digAndMoveTo(Position Origin, Position destination){
+        Cell block = getNextCellToGo(Origin, destination);
+        
+        if(block.type == CellType.DIRT){
+            return new DigCommand(block.x, block.y);
+        } else if (block.type == CellType.AIR){
+            return new MoveCommand(block.x, block.y);
+        } else{
+            return new DoNothingCommand();
+        }
+    }
+
+    // Mengembalikan worm ID yang masih punya ultimate or both
+    private int stillHaveUltimate(){
+        // 3 jika keduanya masih punya
+        if(gameState.myPlayer.worms[1].bananaBombs.count > 0 && gameState.myPlayer.worms[2].snowBalls.count > 0){
+            return 1;
+        } else if(gameState.myPlayer.worms[1].bananaBombs.count > 0){
+            return 2;
+        } else{ // technologist
+            return 3;
+        }
+    }
+   
+    private int isAnyEnemyThrowable(String profession) {
+        // mengembalikan idx worm yang bisa dilempar
+        // mengembalikan -1 jika tidak ada 
+        for (int i = 0; i < 3; i++) {
+            if (isEnemyThrowable(opponent.worms[i].position, profession)) {
+                return i;
+            }
+        }
+        
+        return -1;
+    }
+
+    private boolean isToNearFriend(){
+        //mengembalikan true jika radius antar worm terlalu dekat (radius antar teman < 3)
+        //mengembalikan false jika radius antar worm masih batas wajar (radius antar teman >= 3)
+        for (int i = 0; i < 3; ++i){
+            MyWorm wormI = gameState.myPlayer.worms[i];
+            if ( wormI != currentWorm){
+                int radiusBetweenFriend = euclideanDistance(wormI.position.x, wormI.position.y, currentWorm.position.x, currentWorm.position.y);
+                if (radiusBetweenFriend < 3){
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+   
+    
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
 }
