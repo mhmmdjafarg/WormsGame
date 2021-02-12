@@ -2,8 +2,9 @@ package za.co.entelect.challenge;
 
 import za.co.entelect.challenge.command.*;
 import za.co.entelect.challenge.entities.*;
-import za.co.entelect.challenge.enums.CellType;
-import za.co.entelect.challenge.enums.Direction;
+import za.co.entelect.challenge.enums.*;
+//import za.co.entelect.challenge.enums.CellType;
+//import za.co.entelect.challenge.enums.Direction;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -31,7 +32,7 @@ public class Bot {
 
     // Main Command
     public Command run() {
-        Worm enemyWorm;
+        Worm enemyWorm = getFirstWormInRange();
         if (currentWorm.profession == "Commando") {
             // untuk select menggunakan snowball atau banana jika tersedia, baru banana belum snowball
             int idxEnemyAgent =  isAnyEnemyThrowable("Agent");
@@ -46,21 +47,24 @@ public class Bot {
             // untuk banana atau snowball, jika masih ada peluru tembak terus pake select
             int idxEnemyThrowable =  isAnyEnemyThrowable(currentWorm.profession);
             if(idxEnemyThrowable != -1){
-
-            
-            if (currentWorm.bananaBombs != null) {
-                if (currentWorm.bananaBombs.count > 0) {
-                    return new BananaCommand(opponent.worms[idxEnemyThrowable].position.x, opponent.worms[idxEnemyThrowable].position.y);
-                } 
-            } else if (currentWorm.snowBalls != null) {
-                if (currentWorm.snowBalls.count > 0 && opponent.worms[idxEnemyThrowable].roundsUntilUnfrozen == 0) {
-                    return new SnowCommand(opponent.worms[idxEnemyThrowable].position.x, opponent.worms[idxEnemyThrowable].position.y);
-                } 
+            if(enemyWorm != null){
+                if (currentWorm.bananaBombs != null) {
+                    if (currentWorm.bananaBombs.count > 0) {
+                        return new BananaCommand(enemyWorm.position.x, enemyWorm.position.y);
+//                    return new BananaCommand(opponent.worms[idxEnemyThrowable].position.x, opponent.worms[idxEnemyThrowable].position.y);
+                    }
+                } else if (currentWorm.snowBalls != null) {
+                    if (currentWorm.snowBalls.count > 0 && enemyWorm.roundsUntilUnfrozen == 0) {
+                        return new SnowCommand(enemyWorm.position.x, enemyWorm.position.y);
+                    }
+//                if (currentWorm.snowBalls.count > 0 && opponent.worms[idxEnemyThrowable].roundsUntilUnfrozen == 0) {
+//                    return new SnowCommand(opponent.worms[idxEnemyThrowable].position.x, opponent.worms[idxEnemyThrowable].position.y);
+//                }
+                }
             }
         }
-        }
        
-        enemyWorm = getFirstWormInRange();
+
         if (enemyWorm != null) {
             Direction direction = resolveDirection(currentWorm.position, enemyWorm.position);
             return new ShootCommand(direction);
