@@ -175,4 +175,19 @@ public class Bot {
             return null;
         }
     }
+
+    private boolean isEnemyShootable(Position enemy_position) { //randy
+        /** cek di sekitar musuh ada temen atau ngga **/
+        for (int i = 0; i < 3; ++i) {
+            if (gameState.myPlayer.worms[i].health != 0) {
+                /** kalau ga mati berarti ada kemungkinan deket musuh **/
+                int deltax = gameState.myPlayer.worms[i].position.x - enemy_position.x;
+                int deltay = gameState.myPlayer.worms[i].position.y - enemy_position.y;
+                if (Math.sqrt(Math.pow(deltax, 2) + Math.pow(deltay, 2)) <= 2) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
 }
