@@ -10,10 +10,10 @@ public class GameState {
     @SerializedName("maxRounds")
     public int maxRounds;
 
-    @SerializedName('pushbackDamage')
+    @SerializedName("pushbackDamage")
     public int pushbackDamage;
 
-    @SerializedName('lavaDamage')
+    @SerializedName("lavaDamage")
     public int lavaDamage;
 
     @SerializedName("mapSize")

@@ -4,15 +4,15 @@ import com.google.gson.annotations.SerializedName;
 
 
 public class SnowBalls {
-    @SerializedName('freezeDuration')
+    @SerializedName("freezeDuration")
     public int freezeDuration;
 
-    @SerializedName('range')
+    @SerializedName("range")
     public int range;
 
-    @SerializedName('count')
+    @SerializedName("count")
     public int count;
 
-    @SerializedName('freezeRadius')
+    @SerializedName("freezeRadius")
     public int freezeRadius;
 }
