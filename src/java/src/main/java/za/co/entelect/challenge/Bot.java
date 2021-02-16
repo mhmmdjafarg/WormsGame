@@ -32,13 +32,14 @@ public class Bot {
     public Command run() {
         /* Memeriksa apakah worm yang sedang dipilih, terkena effect freeze atau tidak */
         boolean selected = false;
+        MyWorm[] meWorm = gameState.myPlayer.worms;
+        int ID =0;
         if(isWormFrozen(currentWorm)){
-            MyWorm meWorm[] = Arrays.stream(gameState.myPlayer.worms).get();
             for(int i =0; i < 3; i++){
                 if(!isWormFrozen(meWorm[i])){
                     selected = true;
                     /* ID bisa digunakan untuk select Command, menunjukkan ID worm yang tidak terkena effect freeze */
-                    int ID = meWorm[i].id;
+                    ID = i;
                     // this.currentWorm = worms[i];
                 }
             }
@@ -59,21 +60,21 @@ public class Bot {
                 if(idxEnemyAgent != -1){
                     /* Periksa apakah masih ada peluru dan tidak sedang terkena freeze */
                     if (IsWormCanThrow(gameState.myPlayer.worms[2])){
-                        Command snowball = new SnowBalls(opponent.worms[idxEnemyAgent].position.x, opponent.worms[idxEnemyAgent].position.y);
+                        Command snowball = new SnowCommand(opponent.worms[idxEnemyAgent].position.x, opponent.worms[idxEnemyAgent].position.y);
                         return new SelectCommand(2, snowball.render());
                     } 
                 }
             }
 
             /* Select banana weapon dahulu */
-            if(meWorm[ID].bananaBombs != null && meWorm[ID].bananaBombs.count > 0){
+            if(meWorm[ID].bananaBombs != null && meWorm[ID].bananaBombs.count > 0 && idxEnemyAgent != -1){
                 Command Banana = new BananaCommand(opponent.worms[idxEnemyAgent].position.x, opponent.worms[idxEnemyAgent].position.y);
                 return new SelectCommand(ID, Banana.render());
             }
 
             /* Select freeze weapon */
             idxEnemyAgent = isAnyEnemyThrowable("Technologist");
-            if(meWorm[ID].snowballs != null && meWorm[ID].snowBalls.count > 0 && !isWormFrozen(opponent.worms[idxEnemyAgent])){
+            if(meWorm[ID].snowBalls != null && meWorm[ID].snowBalls.count > 0 && idxEnemyAgent != -1 && !isWormFrozen(opponent.worms[idxEnemyAgent])){
                 Command snowball = new SnowCommand(opponent.worms[idxEnemyAgent].position.x, opponent.worms[idxEnemyAgent].position.y);
                 return new SelectCommand(ID, snowball.render());
             }
@@ -87,7 +88,7 @@ public class Bot {
             }
 
             /* Jalan menuju powerup */
-            Position powerup = getNearestPowerupPosition(worms[ID]);
+            Position powerup = getNearestPowerupPosition(meWorm[ID]);
             // Prioritas ambil powerUp jika health tidak max
             if (powerup.x != -1 && meWorm[ID].health < 100) {
                 return digAndMoveTo(meWorm[ID].position, powerup);
@@ -110,20 +111,20 @@ public class Bot {
                 if(idxEnemyAgent != -1){
                     /* Periksa apakah masih ada peluru dan tidak sedang terkena freeze */
                     if (IsWormCanThrow(gameState.myPlayer.worms[2])){
-                        Command snowball = new SnowBalls(opponent.worms[idxEnemyAgent].position.x, opponent.worms[idxEnemyAgent].position.y);
+                        Command snowball = new SnowCommand(opponent.worms[idxEnemyAgent].position.x, opponent.worms[idxEnemyAgent].position.y);
                         return new SelectCommand(2, snowball.render());
                     } 
                 }
             }
 
             /* Select banana weapon dahulu */
-            if(currentWorm.bananaBombs != null && currentWorm.bananaBombs.count > 0){
+            if(currentWorm.bananaBombs != null && currentWorm.bananaBombs.count > 0 && idxEnemyAgent != -1){
                 return new BananaCommand(opponent.worms[idxEnemyAgent].position.x, opponent.worms[idxEnemyAgent].position.y);
             }
 
             /* Select freeze weapon */
             idxEnemyAgent = isAnyEnemyThrowable("Technologist");
-            if(currentWorm.snowballs != null && currentWorm.snowBalls.count > 0 && !isWormFrozen(opponent.worms[idxEnemyAgent])){
+            if(currentWorm.snowBalls != null && currentWorm.snowBalls.count > 0 && idxEnemyAgent != -1 && !isWormFrozen(opponent.worms[idxEnemyAgent])){
                 return new SnowCommand(opponent.worms[idxEnemyAgent].position.x, opponent.worms[idxEnemyAgent].position.y);
             }
 
@@ -284,9 +285,9 @@ public class Bot {
                 /** kalau ga mati berarti ada kemungkinan deket musuh **/
                 Position myWormPosition = gameState.myPlayer.worms[i].position;
                 int radius = 0; // default value , kalau commando
-                if (profession.equal("Agent")){
+                if (profession.equals("Agent")){
                     radius = 2;
-                }else if (profession.equal("Technologist")) {
+                }else if (profession.equals("Technologist")) {
                     radius = 1;
                 }
                 if (euclideanDistance(myWormPosition.x, myWormPosition.y, enemy_position.x, enemy_position.y) <= radius || radius == 0) {
