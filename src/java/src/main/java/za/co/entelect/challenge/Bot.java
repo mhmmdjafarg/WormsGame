@@ -40,7 +40,7 @@ public class Bot {
                     selected = true;
                     /* ID bisa digunakan untuk select Command, menunjukkan ID worm yang tidak terkena effect freeze */
                     ID = i;
-                    // this.currentWorm = worms[i];
+                    this.currentWorm = meWorm[i];
                 }
             }
         }
