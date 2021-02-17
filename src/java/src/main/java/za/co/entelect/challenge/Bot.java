@@ -210,6 +210,10 @@ public class Bot {
         return cells;
     }
 
+    private boolean isCellPowerUp(Cell my_cell) {
+        return (my_cell.powerup != null);
+    }
+
     private int euclideanDistance(int aX, int aY, int bX, int bY) {
         return (int) (Math.sqrt(Math.pow(aX - bX, 2) + Math.pow(aY - bY, 2)));
     }
@@ -252,6 +256,10 @@ public class Bot {
         int imin = 0;
         for (int i = 0; i < size; i++) {
             Cell block = surroundingBlocks.get(i);
+            //prior
+            if (isCellPowerUp(block)) {
+                return block;
+            }
             arrDistance[i] = euclideanDistance(block.x, block.y, destination.x, destination.y);
             if (arrDistance[i] < arrDistance[imin]) {
                 imin = i;
@@ -274,7 +282,9 @@ public class Bot {
         }
     }
 
-
+    // private boolean isToNearWithFriend() {
+        
+    // }
 
     private boolean isEnemyThrowable(Position enemy_position , String profession) { //randy
         /** cek di sekitar musuh ada temen atau ngga
