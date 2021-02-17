@@ -61,7 +61,7 @@ public class Bot {
                     /* Periksa apakah masih ada peluru dan tidak sedang terkena freeze */
                     if (IsWormCanThrow(gameState.myPlayer.worms[2])){
                         Command snowball = new SnowCommand(opponent.worms[idxEnemyAgent].position.x, opponent.worms[idxEnemyAgent].position.y);
-                        return new SelectCommand(2, snowball.render());
+                        return new SelectCommand(3, snowball.render());
                     } 
                 }
             }
@@ -69,14 +69,14 @@ public class Bot {
             /* Select banana weapon dahulu */
             if(meWorm[ID].bananaBombs != null && meWorm[ID].bananaBombs.count > 0 && idxEnemyAgent != -1){
                 Command Banana = new BananaCommand(opponent.worms[idxEnemyAgent].position.x, opponent.worms[idxEnemyAgent].position.y);
-                return new SelectCommand(ID, Banana.render());
+                return new SelectCommand(ID+1, Banana.render());
             }
 
             /* Select freeze weapon */
             idxEnemyAgent = isAnyEnemyThrowable("Technologist");
             if(meWorm[ID].snowBalls != null && meWorm[ID].snowBalls.count > 0 && idxEnemyAgent != -1 && !isWormFrozen(opponent.worms[idxEnemyAgent])){
                 Command snowball = new SnowCommand(opponent.worms[idxEnemyAgent].position.x, opponent.worms[idxEnemyAgent].position.y);
-                return new SelectCommand(ID, snowball.render());
+                return new SelectCommand(ID+1, snowball.render());
             }
 
             /* Tembakan basic */
@@ -84,7 +84,7 @@ public class Bot {
             if (enemyWorm != null) {
                 Direction direction = resolveDirection(meWorm[ID].position, enemyWorm.position);
                 Command Shoot = new ShootCommand(direction);
-                return new SelectCommand(ID, Shoot.render());
+                return new SelectCommand(ID+1, Shoot.render());
             }
 
             /* Jalan menuju powerup */
@@ -112,7 +112,7 @@ public class Bot {
                     /* Periksa apakah masih ada peluru dan tidak sedang terkena freeze */
                     if (IsWormCanThrow(gameState.myPlayer.worms[2])){
                         Command snowball = new SnowCommand(opponent.worms[idxEnemyAgent].position.x, opponent.worms[idxEnemyAgent].position.y);
-                        return new SelectCommand(2, snowball.render());
+                        return new SelectCommand(3, snowball.render());
                     } 
                 }
             }
@@ -355,6 +355,10 @@ public class Bot {
     }
 
     private boolean IsWormCanThrow(MyWorm worm){
+        if(worm.health <= 0){
+            return false;
+        }
+
         if(worm.bananaBombs != null){
             return (worm.roundsUntilUnfrozen > 0 && worm.bananaBombs.count > 0);
         } else{
