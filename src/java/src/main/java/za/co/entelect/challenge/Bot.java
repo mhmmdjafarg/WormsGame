@@ -211,7 +211,7 @@ public class Bot {
     }
 
     private boolean isCellPowerUp(Cell my_cell) {
-        return (my_cell.powerup != null);
+        return (my_cell.powerUp != null);
     }
 
     private int euclideanDistance(int aX, int aY, int bX, int bY) {
@@ -362,8 +362,13 @@ public class Bot {
 
     // Origin --> titik asal
     private Command digAndMoveTo(Position Origin, Position destination){
-        Cell block = getNextCellToGo(Origin, destination);
-        
+        Cell block;// = getNextCellToAttack(Origin, destination);
+        if (euclideanDistance(Origin.x, Origin.y, destination.x, destination.y) > 7 ) {
+            block = getNextCellToGo(Origin, destination);
+        } else {
+            block = getNextCellToAttack(Origin, destination);
+        }
+
         if(block.type == CellType.DIRT){
             return new DigCommand(block.x, block.y);
         } else if (block.type == CellType.AIR){
@@ -388,7 +393,7 @@ public class Bot {
     private int isAnyEnemyThrowable(String profession) {
         // mengembalikan idx worm yang bisa dilempar
         // mengembalikan -1 jika tidak ada 
-        int idWorm;
+        int idWorm = 0;
         if (profession.equals("Agent")) {
             idWorm = 1;
         } else if (profession.equals("Technologist")) {
@@ -396,7 +401,7 @@ public class Bot {
         }
 
         for (int i = 0; i < 3; i++) {
-            if (isEnemyInThrowRange(opponent.worms[i].position, gameState.myPlayer.worms[i].position)) {
+            if (isEnemyInThrowRange(opponent.worms[i].position, gameState.myPlayer.worms[idWorm].position)) {
                 if (isEnemyThrowable(opponent.worms[i].position, profession)) {
                     return i;
                 }
@@ -431,20 +436,40 @@ public class Bot {
         /* list semua cell di sekitar, 
         setiap cellnya akan dihitung jarak euclidean ke dest,*/
         List<Cell> surroundingBlocks = getSurroundingCells(origin.x, origin.y);
-        int size = surroundingBlocks.size();
-        int[] arrDistance = new int[size];
+        List<Cell> attackingBlocks = getAttackingCells(destination.x, destination.y);
+
+        int minimumDistance = euclideanDistance(origin.x, origin.y, destination.x, destination.y);
+        int nextX = origin.x;
+        int nextY = origin.y;
 
         /* pilih cell yang jaraknya paling minimum */
-        int imin = 0;
-        for (int i = 0; i < size; i++) {
-            Cell block = surroundingBlocks.get(i);
-            arrDistance[i] = euclideanDistance(block.x, block.y, destination.x, destination.y);
-            if (arrDistance[i] < arrDistance[imin]) {
-                imin = i;
+        // int imin = 0;
+        // for (int i = 0; i < size; i++) {
+        //     Cell block = surroundingBlocks.get(i);
+        //     arrDistance[i] = euclideanDistance(block.x, block.y, destination.x, destination.y);
+        //     if (arrDistance[i] < arrDistance[imin]) {
+        //         imin = i;
+        //     }
+        // }
+
+        for (Cell surrounding: surroundingBlocks) {
+            for (Cell attacking: attackingBlocks) {
+                int distance = euclideanDistance(surrounding.x, surrounding.y, attacking.x, attacking.y);
+                if (distance < minimumDistance) {
+                    minimumDistance = distance;
+                    nextX = surrounding.x;
+                    nextY = surrounding.y;
+                }
             }
         }
+
+        int finalX = nextX;
+        int finalY = nextY;
         
-        return surroundingBlocks.get(imin);
+        return surroundingBlocks.stream()
+                .filter(block -> block.x == finalX && block.y == finalY)
+                .findAny()
+                .orElse(null);
     }
 
     private List<Cell> getAttackingCells(int x, int y) {
@@ -473,7 +498,10 @@ public class Bot {
         for (int i = -3; i <= 3; i++) {
             if (i != 0) {
                 if (isValidCoordinate(x+i, y+i)) {
-                    
+                    cells.add(gameState.map[y+i][x+i]);
+                } 
+                if (isValidCoordinate(x-i, y+i)) {
+                    cells.add(gameState.map[y+i][x-i]);
                 }
             }
         }
