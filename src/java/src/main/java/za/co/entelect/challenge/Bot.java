@@ -49,7 +49,7 @@ public class Bot {
             /* Gunakan command select */
             /* Jika current worm merupakan commando, cek apakah worm lain dapat menembakkan skill kepada musuh atau tidak*/
             int idxEnemyAgent = isAnyEnemyThrowable("Agent");
-            if(meWorm[index].profession.equals("Commando")){
+            if(meWorm[index].profession.equals("Commando") && gameState.myPlayer.remainingWormSelections > 0){
                 if(idxEnemyAgent != -1){
                     if (IsWormCanThrow(gameState.myPlayer.worms[1])) {
                         Command Banana = new BananaCommand(opponent.worms[idxEnemyAgent].position.x, opponent.worms[idxEnemyAgent].position.y);
@@ -93,7 +93,7 @@ public class Bot {
         } else {
             /* Jika current worm merupakan commando, cek apakah worm lain dapat menembakkan skill kepada musuh atau tidak*/
             int idxEnemyAgent = isAnyEnemyThrowable("Agent");
-            if(currentWorm.profession.equals("Commando")){
+            if(currentWorm.profession.equals("Commando") && gameState.myPlayer.remainingWormSelections > 0){
                 if(idxEnemyAgent != -1){
                     if (IsWormCanThrow(gameState.myPlayer.worms[1])) {
                         Command Banana = new BananaCommand(opponent.worms[idxEnemyAgent].position.x, opponent.worms[idxEnemyAgent].position.y);
@@ -473,6 +473,26 @@ public class Bot {
         //         imin = i;
         //     }
         // }
+
+        /* 
+        Y = Kita, O = musuh, A shootable
+        X X X X X X
+        X O A A A X
+        X A A X S S
+        X A X A S Y
+        X A X X S S
+
+        X X X X X X
+        X O B A Y X
+        X A A X X X
+        X A X A X X
+        X A X X X X
+        */
+        for (Cell attacking : attackingBlocks) {
+            if (attacking.x == origin.x && attacking.y == origin.y) {
+                return getNextCellToGo(origin, destination);
+            }
+        }
 
         for (Cell surrounding: surroundingBlocks) {
             for (Cell attacking: attackingBlocks) {
