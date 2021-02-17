@@ -257,17 +257,24 @@ public class Bot {
         for (int i = 0; i < size; i++) {
             Cell block = surroundingBlocks.get(i);
             //prior
-            if (isCellPowerUp(block)) {
+            if (isCellPowerUp(block)) { //powerup pasti di block air
                 return block;
             }
             arrDistance[i] = euclideanDistance(block.x, block.y, destination.x, destination.y);
-            if (arrDistance[i] < arrDistance[imin]) {
-                imin = i;
+            if (gameState.currentRound < 150) { // belum ada lava
+                if (arrDistance[i] < arrDistance[imin] && !isToNearFriend(block)) {
+                    imin = i;
+                }
+            }else{ //round >= 150 mulai ada lava, ini bisa diganti angka roundnya
+                if (arrDistance[i] < arrDistance[imin]) {
+                    imin = i;
+                }
             }
         }
-        
         return surroundingBlocks.get(imin);
     }
+
+
 
     /* Target enemy mulai dari commando */
     private Worm getWormToHunt() {
@@ -281,10 +288,6 @@ public class Bot {
             return null;
         }
     }
-
-    // private boolean isToNearWithFriend() {
-        
-    // }
 
     private boolean isEnemyThrowable(Position enemy_position , String profession) { //randy
         /** cek di sekitar musuh ada temen atau ngga
@@ -402,13 +405,13 @@ public class Bot {
         return -1;
     }
 
-    private boolean isToNearFriend(){
+    private boolean isToNearFriend(Cell nextCell){
         //mengembalikan true jika radius antar worm terlalu dekat (radius antar teman < 3)
         //mengembalikan false jika radius antar worm masih batas wajar (radius antar teman >= 3)
         for (int i = 0; i < 3; ++i){
             MyWorm wormI = gameState.myPlayer.worms[i];
             if ( wormI != currentWorm){
-                int radiusBetweenFriend = euclideanDistance(wormI.position.x, wormI.position.y, currentWorm.position.x, currentWorm.position.y);
+                int radiusBetweenFriend = euclideanDistance(wormI.position.x, wormI.position.y, nextCell.x, nextCell.y);
                 if (radiusBetweenFriend < 3){
                     return true;
                 }
