@@ -34,9 +34,9 @@ public class Bot {
         boolean selected = false;
         MyWorm[] meWorm = gameState.myPlayer.worms;
         int ID =0;
-        if(isWormFrozen(currentWorm)){
+        if(isWormFrozen(currentWorm) && gameState.myPlayer.remainingWormSelections > 0){
             for(int i =0; i < 3; i++){
-                if(!isWormFrozen(meWorm[i])){
+                if(!isWormFrozen(meWorm[i]) && meWorm[i].health > 0){
                     selected = true;
                     /* ID bisa digunakan untuk select Command, menunjukkan ID worm yang tidak terkena effect freeze */
                     ID = i;
@@ -175,10 +175,12 @@ public class Bot {
                 int coordinateX = currentWorm.position.x + (directionMultiplier * direction.x);
                 int coordinateY = currentWorm.position.y + (directionMultiplier * direction.y);
 
+                /* Cek apakah kordinat valid */
                 if (!isValidCoordinate(coordinateX, coordinateY)) {
                     break;
                 }
 
+                /* Cek apakah musuh berada pada jarak tembak atau tidak */
                 if (euclideanDistance(currentWorm.position.x, currentWorm.position.y, coordinateX, coordinateY) > range) {
                     break;
                 }
@@ -379,16 +381,16 @@ public class Bot {
     }
 
     // Mengembalikan worm ID yang masih punya ultimate or both
-    private int stillHaveUltimate(){
-        // 3 jika keduanya masih punya
-        if(gameState.myPlayer.worms[1].bananaBombs.count > 0 && gameState.myPlayer.worms[2].snowBalls.count > 0){
-            return 1;
-        } else if(gameState.myPlayer.worms[1].bananaBombs.count > 0){
-            return 2;
-        } else{ // technologist
-            return 3;
-        }
-    }
+//    private int stillHaveUltimate(){
+//        // 3 jika keduanya masih punya
+//        if(gameState.myPlayer.worms[1].bananaBombs.count > 0 && gameState.myPlayer.worms[2].snowBalls.count > 0){
+//            return 1;
+//        } else if(gameState.myPlayer.worms[1].bananaBombs.count > 0){
+//            return 2;
+//        } else{ // technologist
+//            return 3;
+//        }
+//    }
    
     private int isAnyEnemyThrowable(String profession) {
         // mengembalikan idx worm yang bisa dilempar
