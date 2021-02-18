@@ -44,12 +44,19 @@ public class Bot {
                 }
             }
         }
-        
-        if (selected) {
+
+        /* opsional kalau musuh tinggal satu dan kita punya jumlah banyak, gunakan select */
+        if(EnemyJustOne()){
+            selected = true;
+            index = currentWorm.id-1;
+        }
+
+        Worm enemyWorm;
+        if (selected && gameState.myPlayer.remainingWormSelections > 0) {
             /* Gunakan command select */
             /* Jika current worm merupakan commando, cek apakah worm lain dapat menembakkan skill kepada musuh atau tidak*/
             int idxEnemyAgent = isAnyEnemyThrowable("Agent");
-            if(meWorm[index].profession.equals("Commando") && gameState.myPlayer.remainingWormSelections > 0){
+            if(meWorm[index].profession.equals("Commando")){
                 if(idxEnemyAgent != -1){
                     if (IsWormCanThrow(gameState.myPlayer.worms[1])) {
                         Command Banana = new BananaCommand(opponent.worms[idxEnemyAgent].position.x, opponent.worms[idxEnemyAgent].position.y);
@@ -59,7 +66,8 @@ public class Bot {
                 idxEnemyAgent = isAnyEnemyThrowable("Technologist");
                 if(idxEnemyAgent != -1){
                     /* Periksa apakah masih ada peluru dan tidak sedang terkena freeze */
-                    if (IsWormCanThrow(gameState.myPlayer.worms[2])){
+                    enemyWorm = getFirstWormInRange(meWorm[index]);
+                    if (IsWormCanThrow(gameState.myPlayer.worms[2]) && (enemyWorm != null)){
                         Command snowball = new SnowCommand(opponent.worms[idxEnemyAgent].position.x, opponent.worms[idxEnemyAgent].position.y);
                         return new SelectCommand(3, snowball.render());
                     } 
@@ -73,14 +81,15 @@ public class Bot {
             }
 
             /* Select freeze weapon */
-            idxEnemyAgent = isAnyEnemyThrowable("Technologist");
-            if(meWorm[index].snowBalls != null && meWorm[index].snowBalls.count > 0 && idxEnemyAgent != -1 && !isWormFrozen(opponent.worms[idxEnemyAgent])){
-                Command snowball = new SnowCommand(opponent.worms[idxEnemyAgent].position.x, opponent.worms[idxEnemyAgent].position.y);
+            // idxEnemyAgent = isAnyEnemyThrowable("Technologist");
+            enemyWorm = anyWormCanShoot();
+            if(meWorm[index].snowBalls != null && meWorm[index].snowBalls.count > 0 && (enemyWorm != null) && !isWormFrozen(enemyWorm)){
+                Command snowball = new SnowCommand(enemyWorm.position.x, enemyWorm.position.y);
                 return new SelectCommand(index+1, snowball.render());
             }
 
             /* Tembakan basic */
-            Worm enemyWorm = getFirstWormInRange(meWorm[index]);
+            enemyWorm = getFirstWormInRange(meWorm[index]);
             if (enemyWorm != null) {
                 Direction direction = resolveDirection(meWorm[index].position, enemyWorm.position);
                 Command Shoot = new ShootCommand(direction);
@@ -103,7 +112,8 @@ public class Bot {
                 idxEnemyAgent = isAnyEnemyThrowable("Technologist");
                 if(idxEnemyAgent != -1){
                     /* Periksa apakah masih ada peluru dan tidak sedang terkena freeze */
-                    if (IsWormCanThrow(gameState.myPlayer.worms[2])){
+                    enemyWorm = getFirstWormInRange(currentWorm);
+                    if (IsWormCanThrow(gameState.myPlayer.worms[2]) && (enemyWorm != null)){
                         Command snowball = new SnowCommand(opponent.worms[idxEnemyAgent].position.x, opponent.worms[idxEnemyAgent].position.y);
                         return new SelectCommand(3, snowball.render());
                     } 
@@ -116,21 +126,63 @@ public class Bot {
             }
 
             /* Select freeze weapon */
-            idxEnemyAgent = isAnyEnemyThrowable("Technologist");
-            if(currentWorm.snowBalls != null && currentWorm.snowBalls.count > 0 && idxEnemyAgent != -1 && !isWormFrozen(opponent.worms[idxEnemyAgent])){
-                return new SnowCommand(opponent.worms[idxEnemyAgent].position.x, opponent.worms[idxEnemyAgent].position.y);
+            // idxEnemyAgent = isAnyEnemyThrowable("Technologist");
+            enemyWorm = anyWormCanShoot();
+            if(currentWorm.snowBalls != null && currentWorm.snowBalls.count > 0 && enemyWorm != null && !isWormFrozen(enemyWorm) ){
+                return new SnowCommand(enemyWorm.position.x, enemyWorm.position.y);
             }
 
             /* Tembakan basic */
-            Worm enemyWorm = getFirstWormInRange(currentWorm);
+            enemyWorm = getFirstWormInRange(currentWorm);
             if (enemyWorm != null) {
                 Direction direction = resolveDirection(currentWorm.position, enemyWorm.position);
                 return new ShootCommand(direction);
             }
 
+            /* Jika sudah sendiri dan ternyata musuh lebih kuat, maka kabur kaburan*/
+            if(WeAreAlone()){
+                boolean enemyStronger = false;
+                int i = 0;
+                while(!enemyStronger && i < 3){
+                    if(currentWorm.health < opponent.worms[i].health){
+                        enemyStronger = true;
+                    }
+                    i++;
+                }
+                if(enemyStronger){
+                    Position Dest = new Position();
+                    Dest = randomPosition();
+                    // List<Cell> surroundingBlocks = getSurroundingCells(currentWorm.position.x, currentWorm.position.y);
+                    // Cell randomCell = surroundingBlocks.get( (int) Math.random()*(surroundingBlocks.size()-1));
+                    // Position Dest = new Position();
+                    // Dest.x = randomCell.x;
+                    // Dest.y = randomCell.y;
+                    return digAndMoveTo(currentWorm.position, Dest);
+                }
+            }
+
             enemyWorm = getWormToHunt(currentWorm.id);
             return digAndMoveTo(currentWorm.position, enemyWorm.position);            
         }
+    }
+
+    private Position randomPosition() {
+        List<Cell> surroundingBlocks = getSurroundingCells(currentWorm.position.x, currentWorm.position.y);
+        Cell randomCell;
+        boolean permitted = true;
+        do {
+            randomCell = surroundingBlocks.get( (int) Math.random()*(surroundingBlocks.size()-1));
+            for (int i = 0; i < 3; ++i) {
+                if (opponent.worms[i].position.x == randomCell.x && opponent.worms[i].position.y == randomCell.y && opponent.worms[i].health > 0){
+                    permitted = false;
+                }
+            }   
+        }while (!permitted);
+
+        Position Dest = new Position();
+        Dest.x = randomCell.x;
+        Dest.y = randomCell.y;
+        return Dest;
     }
 
     /* Mengembalikan posisi musuh terdekat dengan selected worm,
@@ -253,6 +305,8 @@ public class Bot {
         List<Cell> surroundingBlocks = getSurroundingCells(origin.x, origin.y);
         int size = surroundingBlocks.size();
         int[] arrDistance = new int[size];
+        boolean near;
+        boolean dirt = true;
 
         /* pilih cell yang jaraknya paling minimum */
         int imin = 0;
@@ -263,13 +317,27 @@ public class Bot {
                 return block;
             }
             arrDistance[i] = euclideanDistance(block.x, block.y, destination.x, destination.y);
-            if (gameState.currentRound < 150) { // belum ada lava
-                if (arrDistance[i] < arrDistance[imin] && !isToNearFriend(block)) {
+            if (gameState.currentRound < 150) {
+                near = isToNearFriend(block);
+            } else {
+                near = false;
+            }
+//            // belum ada lava
+//                if (arrDistance[i] < arrDistance[imin] && !isToNearFriend(block)) {
+//                    imin = i;
+//                }
+//            }else{ //round >= 150 mulai ada lava, ini bisa diganti angka roundnya
+//                if (arrDistance[i] < arrDistance[imin]) {
+//                    imin = i;
+//                }
+//            }
+            if (arrDistance[i] < arrDistance[imin] && !near && block.type != CellType.LAVA) {
+                imin = i;
+                dirt = (block.type == CellType.DIRT);
+            } else if (arrDistance[i] == arrDistance[imin] && !near && block.type != CellType.LAVA) {
+                if (dirt && block.type != CellType.DIRT) {
                     imin = i;
-                }
-            }else{ //round >= 150 mulai ada lava, ini bisa diganti angka roundnya
-                if (arrDistance[i] < arrDistance[imin]) {
-                    imin = i;
+                    dirt = false;
                 }
             }
         }
@@ -383,10 +451,10 @@ public class Bot {
     private Command digAndMoveTo(Position Origin, Position destination){
         // Cell block = getNextCellToGo(Origin, destination);
         Cell block;
-        if (euclideanDistance(Origin.x, Origin.y, destination.x, destination.y) > 7 ) {
-            block = getNextCellToGo(Origin, destination);
-        } else {
+        if (euclideanDistance(Origin.x, Origin.y, destination.x, destination.y) <= 7 ) {
             block = getNextCellToAttack(Origin, destination);
+        } else {
+            block = getNextCellToGo(Origin, destination);
         }
 
         if (block != null) {
@@ -398,18 +466,6 @@ public class Bot {
         } 
         return new DoNothingCommand();
     }
-
-    // Mengembalikan worm ID yang masih punya ultimate or both
-//    private int stillHaveUltimate(){
-//        // 3 jika keduanya masih punya
-//        if(gameState.myPlayer.worms[1].bananaBombs.count > 0 && gameState.myPlayer.worms[2].snowBalls.count > 0){
-//            return 1;
-//        } else if(gameState.myPlayer.worms[1].bananaBombs.count > 0){
-//            return 2;
-//        } else{ // technologist
-//            return 3;
-//        }
-//    }
    
     private int isAnyEnemyThrowable(String profession) {
         // mengembalikan idx worm yang bisa dilempar
@@ -440,7 +496,7 @@ public class Bot {
             MyWorm wormI = gameState.myPlayer.worms[i];
             if (wormI.id != currentWorm.id && wormI.health > 0){
                 int radiusBetweenFriend = euclideanDistance(wormI.position.x, wormI.position.y, nextCell.x, nextCell.y);
-                if (radiusBetweenFriend < 3){
+                if (radiusBetweenFriend < 2){
                     return true;
                 }
             }
@@ -461,6 +517,8 @@ public class Bot {
         List<Cell> attackingBlocks = getAttackingCells(destination.x, destination.y);
 
         int minimumDistance = euclideanDistance(origin.x, origin.y, destination.x, destination.y);
+        int minimumDistance2 = minimumDistance;
+        boolean dirt = true;
         int nextX = origin.x;
         int nextY = origin.y;
 
@@ -497,17 +555,51 @@ public class Bot {
         for (Cell surrounding: surroundingBlocks) {
             for (Cell attacking: attackingBlocks) {
                 int distance = euclideanDistance(surrounding.x, surrounding.y, attacking.x, attacking.y);
-                if (gameState.currentRound < 150) {    
+                if (gameState.currentRound < 150) {
                     if (distance < minimumDistance && !isToNearFriend(surrounding)) {
                         minimumDistance = distance;
+                        minimumDistance2 = euclideanDistance(attacking.x, attacking.y, destination.x, destination.y);
+                        dirt = (surrounding.type == CellType.DIRT);
                         nextX = surrounding.x;
                         nextY = surrounding.y;
+                    } else if (distance == minimumDistance && !isToNearFriend(surrounding)) {
+                        if (dirt && surrounding.type != CellType.DIRT) {
+                            minimumDistance2 = euclideanDistance(attacking.x, attacking.y, destination.x, destination.y);
+                            dirt = false;
+                            nextX = surrounding.x;
+                            nextY = surrounding.y;
+                        } else {
+                            int distance2 = euclideanDistance(attacking.x, attacking.y, destination.x, destination.y);
+                            if (distance2 < minimumDistance2) {
+                                minimumDistance2 = euclideanDistance(attacking.x, attacking.y, destination.x, destination.y);
+                                dirt = (surrounding.type == CellType.DIRT);
+                                nextX = surrounding.x;
+                                nextY = surrounding.y;
+                            }
+                        }
                     }
                 } else {
                     if (distance < minimumDistance) {
                         minimumDistance = distance;
+                        minimumDistance2 = euclideanDistance(attacking.x, attacking.y, destination.x, destination.y);
+                        dirt = (surrounding.type == CellType.DIRT);
                         nextX = surrounding.x;
                         nextY = surrounding.y;
+                    } else if (distance == minimumDistance) {
+                        if (dirt && surrounding.type != CellType.DIRT) {
+                            minimumDistance2 = euclideanDistance(attacking.x, attacking.y, destination.x, destination.y);
+                            dirt = false;
+                            nextX = surrounding.x;
+                            nextY = surrounding.y;
+                        } else {
+                            int distance2 = euclideanDistance(attacking.x, attacking.y, destination.x, destination.y);
+                            if (distance2 < minimumDistance2) {
+                                minimumDistance2 = distance2;
+                                dirt = (surrounding.type == CellType.DIRT);
+                                nextX = surrounding.x;
+                                nextY = surrounding.y;
+                            }
+                        }
                     }
                 }
             }
@@ -524,29 +616,29 @@ public class Bot {
 
     private List<Cell> getAttackingCells(int x, int y) {
         ArrayList<Cell> cells = new ArrayList<>();
-        for (int i = x - 1; i <= x + 1; i++) {
-            for (int j = y - 1; j <= y + 1; j++) {
-                // Don't include the current position
-                if (i != x && j != y && isValidCoordinate(i, j)) {
-                    cells.add(gameState.map[j][i]);
-                }
-            }
-        }
+//        for (int i = x - 1; i <= x + 1; i++) {
+//            for (int j = y - 1; j <= y + 1; j++) {
+//                // Don't include the current position
+//                if (i != x && j != y && isValidCoordinate(i, j)) {
+//                    cells.add(gameState.map[j][i]);
+//                }
+//            }
+//        }
 
         for (int i = x - 4; i <= x + 4; i++) {
-            if (i != x && isValidCoordinate(i, y)) {
+            if ((i != x && i != x+1 && i != x-1) && isValidCoordinate(i, y)) {
                 cells.add(gameState.map[y][i]);
             }
         }
 
         for (int i = y - 4; i <= y + 4; i++) {
-            if (i != y && isValidCoordinate(x, i)) {
+            if ((i != y && i != y+1 && i != y-1) && isValidCoordinate(x, i)) {
                 cells.add(gameState.map[i][x]);
             }
         }
 
         for (int i = -3; i <= 3; i++) {
-            if (i != 0) {
+            if (i != 0 && i != 1 && i != -1) {
                 if (isValidCoordinate(x+i, y+i)) {
                     cells.add(gameState.map[y+i][x+i]);
                 } 
@@ -566,9 +658,41 @@ public class Bot {
     X
     X
     */
+
+    private boolean EnemyJustOne(){
+        int count = 0;
+        for(int i = 0; i < 3; i++){
+            if(opponent.worms[i].health > 0){
+                count++;
+            }
+        }
+        return (count == 1);
+    }
+
+    private boolean WeAreAlone(){
+        int count = 0;
+        for(int i =0; i < 3; i++){
+            if(gameState.myPlayer.worms[i].health>0){
+                count++;
+            }
+        }
+        return (count == 1);
+    }
    
-   
-   
+    private Worm anyWormCanShoot() {
+        // dipake ketika mau nembak snowball
+        // cek worm kita ada yang bisa nembak si target gak
+        for (int i = 0; i < 3; i++) {
+            Worm canBeShot = getFirstWormInRange(gameState.myPlayer.worms[i]);
+            // cek juga si technologist nya bisa ngelempar snowball ke target gk?
+            if (canBeShot != null && isEnemyInThrowRange(canBeShot.position , gameState.myPlayer.worms[2].position, 5)) {
+                return canBeShot;
+            }
+        }
+
+        return null; 
+    }
+
    
    
    
