@@ -44,7 +44,7 @@ public class Bot {
                 }
             }
         }
-        
+        Worm enemyWorm;
         if (selected) {
             /* Gunakan command select */
             /* Jika current worm merupakan commando, cek apakah worm lain dapat menembakkan skill kepada musuh atau tidak*/
@@ -59,7 +59,8 @@ public class Bot {
                 idxEnemyAgent = isAnyEnemyThrowable("Technologist");
                 if(idxEnemyAgent != -1){
                     /* Periksa apakah masih ada peluru dan tidak sedang terkena freeze */
-                    if (IsWormCanThrow(gameState.myPlayer.worms[2])){
+                    enemyWorm = getFirstWormInRange(meWorm[index]);
+                    if (IsWormCanThrow(gameState.myPlayer.worms[2]) && (enemyWorm != null)){
                         Command snowball = new SnowCommand(opponent.worms[idxEnemyAgent].position.x, opponent.worms[idxEnemyAgent].position.y);
                         return new SelectCommand(3, snowball.render());
                     } 
@@ -74,13 +75,13 @@ public class Bot {
 
             /* Select freeze weapon */
             idxEnemyAgent = isAnyEnemyThrowable("Technologist");
-            if(meWorm[index].snowBalls != null && meWorm[index].snowBalls.count > 0 && idxEnemyAgent != -1 && !isWormFrozen(opponent.worms[idxEnemyAgent])){
+            enemyWorm = getFirstWormInRange(meWorm[index]);
+            if(meWorm[index].snowBalls != null && meWorm[index].snowBalls.count > 0 && idxEnemyAgent != -1 && !isWormFrozen(opponent.worms[idxEnemyAgent]) && (enemyWorm != null)){
                 Command snowball = new SnowCommand(opponent.worms[idxEnemyAgent].position.x, opponent.worms[idxEnemyAgent].position.y);
                 return new SelectCommand(index+1, snowball.render());
             }
 
             /* Tembakan basic */
-            Worm enemyWorm = getFirstWormInRange(meWorm[index]);
             if (enemyWorm != null) {
                 Direction direction = resolveDirection(meWorm[index].position, enemyWorm.position);
                 Command Shoot = new ShootCommand(direction);
@@ -103,7 +104,8 @@ public class Bot {
                 idxEnemyAgent = isAnyEnemyThrowable("Technologist");
                 if(idxEnemyAgent != -1){
                     /* Periksa apakah masih ada peluru dan tidak sedang terkena freeze */
-                    if (IsWormCanThrow(gameState.myPlayer.worms[2])){
+                    enemyWorm = getFirstWormInRange(currentWorm);
+                    if (IsWormCanThrow(gameState.myPlayer.worms[2]) && (enemyWorm != null)){
                         Command snowball = new SnowCommand(opponent.worms[idxEnemyAgent].position.x, opponent.worms[idxEnemyAgent].position.y);
                         return new SelectCommand(3, snowball.render());
                     } 
@@ -117,12 +119,12 @@ public class Bot {
 
             /* Select freeze weapon */
             idxEnemyAgent = isAnyEnemyThrowable("Technologist");
-            if(currentWorm.snowBalls != null && currentWorm.snowBalls.count > 0 && idxEnemyAgent != -1 && !isWormFrozen(opponent.worms[idxEnemyAgent])){
+            enemyWorm = getFirstWormInRange(currentWorm);
+            if(currentWorm.snowBalls != null && currentWorm.snowBalls.count > 0 && idxEnemyAgent != -1 && !isWormFrozen(opponent.worms[idxEnemyAgent]) && enemyWorm != null){
                 return new SnowCommand(opponent.worms[idxEnemyAgent].position.x, opponent.worms[idxEnemyAgent].position.y);
             }
 
             /* Tembakan basic */
-            Worm enemyWorm = getFirstWormInRange(currentWorm);
             if (enemyWorm != null) {
                 Direction direction = resolveDirection(currentWorm.position, enemyWorm.position);
                 return new ShootCommand(direction);
@@ -253,6 +255,8 @@ public class Bot {
         List<Cell> surroundingBlocks = getSurroundingCells(origin.x, origin.y);
         int size = surroundingBlocks.size();
         int[] arrDistance = new int[size];
+        boolean near;
+        boolean dirt = true;
 
         /* pilih cell yang jaraknya paling minimum */
         int imin = 0;
@@ -263,13 +267,27 @@ public class Bot {
                 return block;
             }
             arrDistance[i] = euclideanDistance(block.x, block.y, destination.x, destination.y);
-            if (gameState.currentRound < 150) { // belum ada lava
-                if (arrDistance[i] < arrDistance[imin] && !isToNearFriend(block)) {
+            if (gameState.currentRound < 150) {
+                near = isToNearFriend(block);
+            } else {
+                near = false;
+            }
+//            // belum ada lava
+//                if (arrDistance[i] < arrDistance[imin] && !isToNearFriend(block)) {
+//                    imin = i;
+//                }
+//            }else{ //round >= 150 mulai ada lava, ini bisa diganti angka roundnya
+//                if (arrDistance[i] < arrDistance[imin]) {
+//                    imin = i;
+//                }
+//            }
+            if (arrDistance[i] < arrDistance[imin] && !near) {
+                imin = i;
+                dirt = (block.type == CellType.DIRT);
+            } else if (arrDistance[i] == arrDistance[imin] && !near) {
+                if (dirt && block.type != CellType.DIRT) {
                     imin = i;
-                }
-            }else{ //round >= 150 mulai ada lava, ini bisa diganti angka roundnya
-                if (arrDistance[i] < arrDistance[imin]) {
-                    imin = i;
+                    dirt = false;
                 }
             }
         }
@@ -440,7 +458,7 @@ public class Bot {
             MyWorm wormI = gameState.myPlayer.worms[i];
             if (wormI.id != currentWorm.id && wormI.health > 0){
                 int radiusBetweenFriend = euclideanDistance(wormI.position.x, wormI.position.y, nextCell.x, nextCell.y);
-                if (radiusBetweenFriend < 3){
+                if (radiusBetweenFriend < 2){
                     return true;
                 }
             }
@@ -461,6 +479,8 @@ public class Bot {
         List<Cell> attackingBlocks = getAttackingCells(destination.x, destination.y);
 
         int minimumDistance = euclideanDistance(origin.x, origin.y, destination.x, destination.y);
+        int minimumDistance2 = minimumDistance;
+        boolean dirt = true;
         int nextX = origin.x;
         int nextY = origin.y;
 
@@ -497,17 +517,51 @@ public class Bot {
         for (Cell surrounding: surroundingBlocks) {
             for (Cell attacking: attackingBlocks) {
                 int distance = euclideanDistance(surrounding.x, surrounding.y, attacking.x, attacking.y);
-                if (gameState.currentRound < 150) {    
+                if (gameState.currentRound < 150) {
                     if (distance < minimumDistance && !isToNearFriend(surrounding)) {
                         minimumDistance = distance;
+                        minimumDistance2 = euclideanDistance(attacking.x, attacking.y, destination.x, destination.y);
+                        dirt = (surrounding.type == CellType.DIRT);
                         nextX = surrounding.x;
                         nextY = surrounding.y;
+                    } else if (distance == minimumDistance && !isToNearFriend(surrounding)) {
+                        if (dirt && surrounding.type != CellType.DIRT) {
+                            minimumDistance2 = euclideanDistance(attacking.x, attacking.y, destination.x, destination.y);
+                            dirt = false;
+                            nextX = surrounding.x;
+                            nextY = surrounding.y;
+                        } else {
+                            int distance2 = euclideanDistance(attacking.x, attacking.y, destination.x, destination.y);
+                            if (distance2 < minimumDistance2) {
+                                minimumDistance2 = euclideanDistance(attacking.x, attacking.y, destination.x, destination.y);
+                                dirt = (surrounding.type == CellType.DIRT);
+                                nextX = surrounding.x;
+                                nextY = surrounding.y;
+                            }
+                        }
                     }
                 } else {
                     if (distance < minimumDistance) {
                         minimumDistance = distance;
+                        minimumDistance2 = euclideanDistance(attacking.x, attacking.y, destination.x, destination.y);
+                        dirt = (surrounding.type == CellType.DIRT);
                         nextX = surrounding.x;
                         nextY = surrounding.y;
+                    } else if (distance == minimumDistance) {
+                        if (dirt && surrounding.type != CellType.DIRT) {
+                            minimumDistance2 = euclideanDistance(attacking.x, attacking.y, destination.x, destination.y);
+                            dirt = false;
+                            nextX = surrounding.x;
+                            nextY = surrounding.y;
+                        } else {
+                            int distance2 = euclideanDistance(attacking.x, attacking.y, destination.x, destination.y);
+                            if (distance2 < minimumDistance2) {
+                                minimumDistance2 = distance2;
+                                dirt = (surrounding.type == CellType.DIRT);
+                                nextX = surrounding.x;
+                                nextY = surrounding.y;
+                            }
+                        }
                     }
                 }
             }
@@ -524,29 +578,29 @@ public class Bot {
 
     private List<Cell> getAttackingCells(int x, int y) {
         ArrayList<Cell> cells = new ArrayList<>();
-        for (int i = x - 1; i <= x + 1; i++) {
-            for (int j = y - 1; j <= y + 1; j++) {
-                // Don't include the current position
-                if (i != x && j != y && isValidCoordinate(i, j)) {
-                    cells.add(gameState.map[j][i]);
-                }
-            }
-        }
+//        for (int i = x - 1; i <= x + 1; i++) {
+//            for (int j = y - 1; j <= y + 1; j++) {
+//                // Don't include the current position
+//                if (i != x && j != y && isValidCoordinate(i, j)) {
+//                    cells.add(gameState.map[j][i]);
+//                }
+//            }
+//        }
 
         for (int i = x - 4; i <= x + 4; i++) {
-            if (i != x && isValidCoordinate(i, y)) {
+            if ((i != x && i != x+1 && i != x-1) && isValidCoordinate(i, y)) {
                 cells.add(gameState.map[y][i]);
             }
         }
 
         for (int i = y - 4; i <= y + 4; i++) {
-            if (i != y && isValidCoordinate(x, i)) {
+            if ((i != y && i != y+1 && i != y-1) && isValidCoordinate(x, i)) {
                 cells.add(gameState.map[i][x]);
             }
         }
 
         for (int i = -3; i <= 3; i++) {
-            if (i != 0) {
+            if (i != 0 && i != 1 && i != -1) {
                 if (isValidCoordinate(x+i, y+i)) {
                     cells.add(gameState.map[y+i][x+i]);
                 } 
