@@ -44,7 +44,6 @@ public class Bot {
                 }
             }
         }
-<<<<<<< HEAD
 
         /* opsional kalau musuh tinggal satu dan kita punya jumlah banyak, gunakan select */
         if(EnemyJustOne()){
@@ -54,10 +53,6 @@ public class Bot {
 
         Worm enemyWorm;
         if (selected && gameState.myPlayer.remainingWormSelections > 0) {
-=======
-        Worm enemyWorm;
-        if (selected) {
->>>>>>> 362a0d4c652d5d6943c0877ec51e62dbf4716523
             /* Gunakan command select */
             /* Jika current worm merupakan commando, cek apakah worm lain dapat menembakkan skill kepada musuh atau tidak*/
             int idxEnemyAgent = isAnyEnemyThrowable("Agent");
@@ -86,25 +81,15 @@ public class Bot {
             }
 
             /* Select freeze weapon */
-<<<<<<< HEAD
             // idxEnemyAgent = isAnyEnemyThrowable("Technologist");
             enemyWorm = anyWormCanShoot();
             if(meWorm[index].snowBalls != null && meWorm[index].snowBalls.count > 0 && (enemyWorm != null) && !isWormFrozen(enemyWorm)){
                 Command snowball = new SnowCommand(enemyWorm.position.x, enemyWorm.position.y);
-=======
-            idxEnemyAgent = isAnyEnemyThrowable("Technologist");
-            enemyWorm = getFirstWormInRange(meWorm[index]);
-            if(meWorm[index].snowBalls != null && meWorm[index].snowBalls.count > 0 && idxEnemyAgent != -1 && !isWormFrozen(opponent.worms[idxEnemyAgent]) && (enemyWorm != null)){
-                Command snowball = new SnowCommand(opponent.worms[idxEnemyAgent].position.x, opponent.worms[idxEnemyAgent].position.y);
->>>>>>> 362a0d4c652d5d6943c0877ec51e62dbf4716523
                 return new SelectCommand(index+1, snowball.render());
             }
 
             /* Tembakan basic */
-<<<<<<< HEAD
             enemyWorm = getFirstWormInRange(meWorm[index]);
-=======
->>>>>>> 362a0d4c652d5d6943c0877ec51e62dbf4716523
             if (enemyWorm != null) {
                 Direction direction = resolveDirection(meWorm[index].position, enemyWorm.position);
                 Command Shoot = new ShootCommand(direction);
@@ -141,7 +126,6 @@ public class Bot {
             }
 
             /* Select freeze weapon */
-<<<<<<< HEAD
             // idxEnemyAgent = isAnyEnemyThrowable("Technologist");
             enemyWorm = anyWormCanShoot();
             if(currentWorm.snowBalls != null && currentWorm.snowBalls.count > 0 && enemyWorm != null && !isWormFrozen(enemyWorm) ){
@@ -150,15 +134,6 @@ public class Bot {
 
             /* Tembakan basic */
             enemyWorm = getFirstWormInRange(currentWorm);
-=======
-            idxEnemyAgent = isAnyEnemyThrowable("Technologist");
-            enemyWorm = getFirstWormInRange(currentWorm);
-            if(currentWorm.snowBalls != null && currentWorm.snowBalls.count > 0 && idxEnemyAgent != -1 && !isWormFrozen(opponent.worms[idxEnemyAgent]) && enemyWorm != null){
-                return new SnowCommand(opponent.worms[idxEnemyAgent].position.x, opponent.worms[idxEnemyAgent].position.y);
-            }
-
-            /* Tembakan basic */
->>>>>>> 362a0d4c652d5d6943c0877ec51e62dbf4716523
             if (enemyWorm != null) {
                 Direction direction = resolveDirection(currentWorm.position, enemyWorm.position);
                 return new ShootCommand(direction);
@@ -356,17 +331,10 @@ public class Bot {
 //                    imin = i;
 //                }
 //            }
-<<<<<<< HEAD
             if (arrDistance[i] < arrDistance[imin] && !near && block.type != CellType.LAVA) {
                 imin = i;
                 dirt = (block.type == CellType.DIRT);
             } else if (arrDistance[i] == arrDistance[imin] && !near && block.type != CellType.LAVA) {
-=======
-            if (arrDistance[i] < arrDistance[imin] && !near) {
-                imin = i;
-                dirt = (block.type == CellType.DIRT);
-            } else if (arrDistance[i] == arrDistance[imin] && !near) {
->>>>>>> 362a0d4c652d5d6943c0877ec51e62dbf4716523
                 if (dirt && block.type != CellType.DIRT) {
                     imin = i;
                     dirt = false;
