@@ -1,8 +1,9 @@
 # Worms Game : FRJ
 
 ## Strategi Greedy
+Strategi greedy yang kami implementasikan dalam program untuk persoalan worms ini adalah kombinasi dari strategi Strongest enemy first, Greedy by weapon, greedy by location dan greedy by point
 
-Strategi greedy yang kami pilih yakni membunuh lawan secepat mungkin dengan cara target 1 worm dan dekati lokasinya.
+Sederhananya yakni membunuh lawan secepat mungkin dengan cara target 1 persatu worm mulai dari yang terkuat dan dekati lokasinya dengan weapon terkuat
 
 Adapun urutan prioritas command adalah 
 - Select worm lain jika, currentWorm sedang terkena freeze, namun khusus jika worm dapat menembak baik bananabomb,snowball ataupun basic shoot
@@ -30,3 +31,10 @@ Adapun urutan prioritas command adalah
 
 - jalankan run.bat pada game engine, lakukan konfigurasi juga pada game-runner-config.json
 dengan mengedit `"player-a": "./WormsGame/bin",`
+
+
+## Author
+
+- Faris Hasim IF19
+- Randy Zakya IF19
+- Muhammad Jafar IF19
