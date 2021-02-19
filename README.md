@@ -19,14 +19,14 @@ Adapun urutan prioritas command adalah
 ## Cara menggunakan program
 
 - Untuk menjalankan masuk pada directory bin, kemudian buat file bot.json yang berisi
-```{
+`{
 	"author": "Faris Randy Jafar",
 	"email": "FRJ@gmail.com",
 	"nickName": "FRJ",
 	"botLocation": "/",
 	"botFileName": "FRJ.jar",
 	"botLanguage": "java"
-}```
+}`
 
 - jalankan run.bat pada game engine, lakukan konfigurasi juga pada game-runner-config.json
 dengan mengedit `"player-a": "./WormsGame/bin",`
